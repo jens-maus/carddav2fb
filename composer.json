@@ -1,0 +1,93 @@
+{
+    "name": "root/carddav2fb",
+    "description": "CardDAV contacts import for AVM FRITZ!Box",
+    "authors": [
+        {
+            "name": "Karl Glatz",
+            "email": "carlos22b@gmail.com"
+        },
+        {
+            "name": "Martin Rost",
+            "email": "dont@know.com"
+        },
+        {
+            "name": "Jens Maus",
+            "email": "mail@jens-maus.de"
+        },
+        {
+            "name": "Thomas Koch",
+            "email": "thomas@koch.ro"
+        }
+    ],
+    "preferred-install": "dist",
+    "require": {
+        "php": ">=5.4.0",
+        "ext-curl": "*",
+        "ext-ftp": "*",
+        "jens-maus/CardDAV-PHP": "^0.0.0",
+        "jens-maus/fritzbox_api_php": "^0.0.0",
+        "kai-c/vCard-parser": "^0.0.0"
+    },
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "jens-maus/CardDAV-PHP",
+                "version": "0.0.0",
+                "dist": {
+                    "url": "https://api.github.com/repos/jens-maus/CardDAV-PHP/zipball/master",
+                    "type": "zip",
+                    "reference": "c018faf"
+                },
+                "source": {
+                    "url": "https://github.com/jens-maus/CardDAV-PHP",
+                    "type": "git",
+                    "reference": "c018faf"
+                },
+                "autoload": {
+                    "classmap": ["carddav.php"]
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "jens-maus/fritzbox_api_php",
+                "version": "0.0.0",
+                "dist": {
+                    "url": "https://api.github.com/repos/jens-maus/fritzbox_api_php/zipball/master",
+                    "type": "zip",
+                    "reference": "master"
+                },
+                "source": {
+                    "url": "https://github.com/jens-maus/fritzbox_api_php",
+                    "type": "git",
+                    "reference": "master"
+                },
+                "autoload": {
+                    "classmap": ["/"]
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "kai-c/vCard-parser",
+                "version": "0.0.0",
+                "dist": {
+                    "url": "https://api.github.com/repos/kai-c/vCard-parser/zipball/master",
+                    "type": "zip",
+                    "reference": "master"
+                },
+                "source": {
+                    "url": "https://github.com/kai-c/vCard-parser",
+                    "type": "git",
+                    "reference": "master"
+                },
+                "autoload": {
+                    "classmap": ["vCard.php"]
+                }
+            }
+        }
+    ]
+}
