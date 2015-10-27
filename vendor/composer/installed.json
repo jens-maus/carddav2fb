@@ -1,0 +1,71 @@
+[
+    {
+        "name": "jens-maus/CardDAV-PHP",
+        "version": "0.0.0",
+        "version_normalized": "0.0.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/jens-maus/CardDAV-PHP",
+            "reference": "c018faf"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/jens-maus/CardDAV-PHP/zipball/master",
+            "reference": "c018faf",
+            "shasum": null
+        },
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "classmap": [
+                "carddav.php"
+            ]
+        }
+    },
+    {
+        "name": "jens-maus/fritzbox_api_php",
+        "version": "0.0.0",
+        "version_normalized": "0.0.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/jens-maus/fritzbox_api_php",
+            "reference": "master"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/jens-maus/fritzbox_api_php/zipball/master",
+            "reference": "master",
+            "shasum": null
+        },
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "classmap": [
+                "/"
+            ]
+        }
+    },
+    {
+        "name": "kai-c/vCard-parser",
+        "version": "0.0.0",
+        "version_normalized": "0.0.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/kai-c/vCard-parser",
+            "reference": "master"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/kai-c/vCard-parser/zipball/master",
+            "reference": "master",
+            "shasum": null
+        },
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "classmap": [
+                "vCard.php"
+            ]
+        }
+    }
+]

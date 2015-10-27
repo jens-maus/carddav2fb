@@ -23,9 +23,7 @@
 error_reporting(E_ALL);
 setlocale(LC_ALL, 'de_DE.UTF8');
 
-require_once('lib/CardDAV-PHP/carddav.php');
-require_once('lib/vCard-parser/vCard.php');
-require_once('lib/fritzbox_api_php/fritzbox_api.class.php');
+require_once(__DIR__ . '/vendor/autoload.php');
 
 if ($argc == 2) {
   $config_file_name = $argv[1];

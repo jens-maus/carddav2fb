@@ -1,0 +1,85 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "hash": "0b00545f9e614d6c280ec4d784d4b911",
+    "packages": [
+        {
+            "name": "jens-maus/CardDAV-PHP",
+            "version": "0.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jens-maus/CardDAV-PHP",
+                "reference": "c018faf"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jens-maus/CardDAV-PHP/zipball/master",
+                "reference": "c018faf",
+                "shasum": null
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "carddav.php"
+                ]
+            }
+        },
+        {
+            "name": "jens-maus/fritzbox_api_php",
+            "version": "0.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jens-maus/fritzbox_api_php",
+                "reference": "master"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jens-maus/fritzbox_api_php/zipball/master",
+                "reference": "master",
+                "shasum": null
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "/"
+                ]
+            }
+        },
+        {
+            "name": "kai-c/vCard-parser",
+            "version": "0.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/kai-c/vCard-parser",
+                "reference": "master"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/kai-c/vCard-parser/zipball/master",
+                "reference": "master",
+                "shasum": null
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "vCard.php"
+                ]
+            }
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": ">=5.4.0",
+        "ext-curl": "*",
+        "ext-ftp": "*"
+    },
+    "platform-dev": []
+}
