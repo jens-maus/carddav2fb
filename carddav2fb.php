@@ -58,6 +58,7 @@ $config['addnames'] = false;
 $config['orgname'] = false;
 $config['build_photos'] = true;
 $config['quickdial_keyword'] = 'Quickdial:';
+$config['export_photos'] = true;
 
 if(is_file($config_file_name))
   require($config_file_name);
@@ -567,53 +568,56 @@ class CardDAV2FB
         print "  Added email: " . $mail['value'] . " (" . $mail['type'] . ")" . PHP_EOL;
       }
 
-      // check for a photo being part of the VCard
-      if(($entry['photo']) and ($entry['photo_data']) and (is_array($entry['photo_data'])) and ($entry['photo_data'][0]))
+      if($this->config['export_photos'])
       {
-        // check if 'photo_data'[0] is an array as well because then
-        // we have to extract ['value'] and friends.
-        if(is_array($entry['photo_data'][0]) and (array_key_exists('value', $entry['photo_data'][0])))
+        // check for a photo being part of the VCard
+        if(($entry['photo']) and ($entry['photo_data']) and (is_array($entry['photo_data'])) and ($entry['photo_data'][0]))
         {
-          // check if photo_data really contains JPEG data
-          if((array_key_exists('type', $entry['photo_data'][0])) and (is_array($entry['photo_data'][0]['type'])) and
-             ($entry['photo_data'][0]['type'][0] == 'jpeg' or $entry['photo_data'][0]['type'][0] == 'jpg'))
+          // check if 'photo_data'[0] is an array as well because then
+          // we have to extract ['value'] and friends.
+          if(is_array($entry['photo_data'][0]) and (array_key_exists('value', $entry['photo_data'][0])))
           {
-            // get photo, rename, base64 convert and save as jpg
-            $photo_data = $entry['photo_data'][0]['value'];
-            $photo_version = substr(sha1($photo_data), 0, 5);
-            $photo_file = $this->tmpdir . '/' . "{$entry['photo']}_{$photo_version}.jpg";
-
-            // check for base64 encoding of the photo data and convert it
-            // accordingly.
-            if(((array_key_exists('encoding', $entry['photo_data'][0])) and ($entry['photo_data'][0]['encoding'] == 'b')) or $this->is_base64($photo_data))
+            // check if photo_data really contains JPEG data
+            if((array_key_exists('type', $entry['photo_data'][0])) and (is_array($entry['photo_data'][0]['type'])) and
+               ($entry['photo_data'][0]['type'][0] == 'jpeg' or $entry['photo_data'][0]['type'][0] == 'jpg'))
             {
-              file_put_contents($photo_file . ".b64", $photo_data);
-              $this->base64_to_jpeg($photo_file . ".b64", $photo_file);
-              unlink($photo_file . ".b64");
+              // get photo, rename, base64 convert and save as jpg
+              $photo_data = $entry['photo_data'][0]['value'];
+              $photo_version = substr(sha1($photo_data), 0, 5);
+              $photo_file = $this->tmpdir . '/' . "{$entry['photo']}_{$photo_version}.jpg";
+
+              // check for base64 encoding of the photo data and convert it
+              // accordingly.
+              if(((array_key_exists('encoding', $entry['photo_data'][0])) and ($entry['photo_data'][0]['encoding'] == 'b')) or $this->is_base64($photo_data))
+              {
+                file_put_contents($photo_file . ".b64", $photo_data);
+                $this->base64_to_jpeg($photo_file . ".b64", $photo_file);
+                unlink($photo_file . ".b64");
+              }
+              else
+              {
+                print "  WARNING: non-base64 encoded photo data found and used." . PHP_EOL;
+                file_put_contents($photo_file, $photo_data);
+              }
+
+              // add contact photo to xml
+              $person->addChild("imageURL", $this->config['fritzbox_path'] . $this->config['usb_disk'] . "FRITZ/fonpix/" . basename($photo_file));
+
+              print "  Added photo: " . basename($photo_file) . PHP_EOL;
             }
             else
-            {
-              print "  WARNING: non-base64 encoded photo data found and used." . PHP_EOL;
-              file_put_contents($photo_file, $photo_data);
-            }
-
+             print "  WARNING: Only jpg contact photos are currently supported." . PHP_EOL;
+          }
+          elseif(substr($entry['photo_data'][0], 0, 4) == 'http')
+          {
             // add contact photo to xml
-            $person->addChild("imageURL", $this->config['fritzbox_path'] . $this->config['usb_disk'] . "FRITZ/fonpix/" . basename($photo_file));
+            $person->addChild("imageURL", $entry['photo_data'][0]);
 
-            print "  Added photo: " . basename($photo_file) . PHP_EOL;
+            print "  Added photo: " . $entry['photo_data'][0] . PHP_EOL;
           }
           else
-           print "  WARNING: Only jpg contact photos are currently supported." . PHP_EOL;
+            print "  WARNING: Only VCard embedded photo data or a reference URL is currently supported." . PHP_EOL;
         }
-        elseif(substr($entry['photo_data'][0], 0, 4) == 'http')
-        {
-          // add contact photo to xml
-          $person->addChild("imageURL", $entry['photo_data'][0]);
-
-          print "  Added photo: " . $entry['photo_data'][0] . PHP_EOL;
-        }
-        else
-          print "  WARNING: Only VCard embedded photo data or a reference URL is currently supported." . PHP_EOL;
       }
 
       $contact->addChild("services");
@@ -683,106 +687,111 @@ class CardDAV2FB
 	  else
       return 0;  
     }
-    // now we upload the photo jpgs first being stored in the
-    // temp directory.
-
-    // perform an ftps-connection to copy over the photos to a specified directory
-    $ftp_server = $this->config['fritzbox_ip_ftp'];
-    $conn_id = ftp_ssl_connect($ftp_server);
-    if($conn_id == false)
+    
+    if($this->config['export_photos'])
     {
-      print " WARNING: Secure connection to FTP-server '" . $ftp_server . "' failed, retrying without SSL." . PHP_EOL;
-      $conn_id = ftp_connect($ftp_server);
-    }
-
-    if($conn_id != false)
-    {
-      ftp_set_option($conn_id, FTP_TIMEOUT_SEC, 60);
-      $login_result = ftp_login($conn_id, $this->config['fritzbox_user'], $this->config['fritzbox_pw']);
-      if($login_result === true)
+      // now we upload the photo jpgs first being stored in the
+      // temp directory.
+      
+      // perform an ftps-connection to copy over the photos to a specified directory
+      $ftp_server = $this->config['fritzbox_ip_ftp'];
+      $conn_id = ftp_ssl_connect($ftp_server);
+      if($conn_id == false)
       {
-        ftp_pasv($conn_id, true);
+        print " WARNING: Secure connection to FTP-server '" . $ftp_server . "' failed, retrying without SSL." . PHP_EOL;
+        $conn_id = ftp_connect($ftp_server);
+      }
 
-        // create remote photo path on FRITZ!Box if it doesn't exist
-        $remote_path = $this->config['usb_disk'] . "/FRITZ/fonpix";
-        $all_existing_files = ftp_nlist($conn_id, $remote_path);
-        if($all_existing_files == false)
+      if($conn_id != false)
+      {
+        ftp_set_option($conn_id, FTP_TIMEOUT_SEC, 60);
+        $login_result = ftp_login($conn_id, $this->config['fritzbox_user'], $this->config['fritzbox_pw']);
+        if($login_result === true)
         {
-          ftp_mkdir($conn_id, $remote_path);
-          $all_existing_files = array();
-        }
+          ftp_pasv($conn_id, true);
 
-        // now iterate through all jpg files in tempdir and upload them if necessary
-        $dir = new DirectoryIterator($this->tmpdir);
-        foreach($dir as $fileinfo)
-        {
-          if(!$fileinfo->isDot())
+          // create remote photo path on FRITZ!Box if it doesn't exist
+          $remote_path = $this->config['usb_disk'] . "/FRITZ/fonpix";
+          $all_existing_files = ftp_nlist($conn_id, $remote_path);
+          if($all_existing_files == false)
           {
-            if($fileinfo->getExtension() == "jpg")
+            ftp_mkdir($conn_id, $remote_path);
+            $all_existing_files = array();
+          }
+
+          // now iterate through all jpg files in tempdir and upload them if necessary
+          $dir = new DirectoryIterator($this->tmpdir);
+          foreach($dir as $fileinfo)
+          {
+            if(!$fileinfo->isDot())
             {
-              $file = $fileinfo->getFilename();
-
-              print " FTP-Upload '" . $file . "'...";
-              if(!in_array($remote_path . "/" . $file, $all_existing_files))
+              if($fileinfo->getExtension() == "jpg")
               {
-                if(!ftp_put($conn_id, $remote_path . "/" . $file, $fileinfo->getPathname(), FTP_BINARY))
+                $file = $fileinfo->getFilename();
+
+                print " FTP-Upload '" . $file . "'...";
+                if(!in_array($remote_path . "/" . $file, $all_existing_files))
                 {
-                  // retry when a fault occurs.
-                  print " retrying... ";
-                  $conn_id = ftp_ssl_connect($ftp_server);
-                  if($conn_id == false)
-                  {
-                    print " WARNING: Secure re-connection to FTP-server '" . $ftp_server . "' failed, retrying without SSL." . PHP_EOL;
-                    $conn_id = ftp_connect($ftp_server);
-                  }
-
-                  if($conn_id == false)
-                  {
-                    print " ERROR: couldn't re-connect to FTP server '" . $ftp_server . "', abortіng." . PHP_EOL;
-                    break;
-                  }
-
-                  $login_result = ftp_login($conn_id, $this->config['fritzbox_user'], $this->config['fritzbox_pw']);
-                  if($login_result === false)
-                  {
-                    print " ERROR: couldn't re-login to FTP-server '" . $ftp_server . "' with provided username/password settings." . PHP_EOL;
-                    break;
-                  }
-
-                  ftp_pasv($conn_id, true);
                   if(!ftp_put($conn_id, $remote_path . "/" . $file, $fileinfo->getPathname(), FTP_BINARY))
-                    print " ERROR: while uploading file " . $fileinfo->getFilename() . PHP_EOL;
+                  {
+                    // retry when a fault occurs.
+                    print " retrying... ";
+                    $conn_id = ftp_ssl_connect($ftp_server);
+                    if($conn_id == false)
+                    {
+                      print " WARNING: Secure re-connection to FTP-server '" . $ftp_server . "' failed, retrying without SSL." . PHP_EOL;
+                      $conn_id = ftp_connect($ftp_server);
+                    }
+
+                    if($conn_id == false)
+                    {
+                      print " ERROR: couldn't re-connect to FTP server '" . $ftp_server . "', abortіng." . PHP_EOL;
+                      break;
+                    }
+
+                    $login_result = ftp_login($conn_id, $this->config['fritzbox_user'], $this->config['fritzbox_pw']);
+                    if($login_result === false)
+                    {
+                      print " ERROR: couldn't re-login to FTP-server '" . $ftp_server . "' with provided username/password settings." . PHP_EOL;
+                      break;
+                    }
+
+                    ftp_pasv($conn_id, true);
+                    if(!ftp_put($conn_id, $remote_path . "/" . $file, $fileinfo->getPathname(), FTP_BINARY))
+                      print " ERROR: while uploading file " . $fileinfo->getFilename() . PHP_EOL;
+                    else
+                      print " ok." . PHP_EOL;
+                  }
                   else
                     print " ok." . PHP_EOL;
-                }
-                else
-                  print " ok." . PHP_EOL;
 
-                // cleanup old files
-                foreach($all_existing_files as $existing_file)
-                {
-                  if(strpos($existing_file, $remote_path . "/" . substr($file, 0, -10)) !== false)
+                  // cleanup old files
+                  foreach($all_existing_files as $existing_file)
                   {
-                    print " FTP-Delete: " . $existing_file . PHP_EOL;
-                    ftp_delete($conn_id, $remote_path . "/" . basename($existing_file));
+                    if(strpos($existing_file, $remote_path . "/" . substr($file, 0, -10)) !== false)
+                    {
+                      print " FTP-Delete: " . $existing_file . PHP_EOL;
+                      ftp_delete($conn_id, $remote_path . "/" . basename($existing_file));
+                    }
                   }
                 }
+                else
+                  print " already exists." . PHP_EOL;
               }
-              else
-                print " already exists." . PHP_EOL;
             }
           }
         }
+        else
+          print " ERROR: couldn't login to FTP-server '" . $ftp_server . "' with provided username/password settings." . PHP_EOL;
+
+        // close ftp connection
+        ftp_close($conn_id);
       }
       else
-        print " ERROR: couldn't login to FTP-server '" . $ftp_server . "' with provided username/password settings." . PHP_EOL;
+        print " ERROR: couldn't connect to FTP server '" . $ftp_server . "'." . PHP_EOL;
 
-      // close ftp connection
-      ftp_close($conn_id);
     }
-    else
-      print " ERROR: couldn't connect to FTP server '" . $ftp_server . "'." . PHP_EOL;
-
+    
     // in case numeric IP is given, try to resolve to hostname. Otherwise Fritzbox may decline login, because it is determine to be (prohibited) remote access
     $hostname = $this->config['fritzbox_ip'];
     if(filter_var($hostname, FILTER_VALIDATE_IP))

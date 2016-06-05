@@ -51,6 +51,10 @@ $config['group_vip'] = 'VIP';
 // many version Fritz!Box use 'file:///var/media/ftp/' others 'file:///var/InternerSpeicher/' to check just export an your current phonebook and have a look at any imageURL tag `<imageURL>file:///var/media/ftp/(HERE_config_from:usb_disk)/FRITZ/fonpix/9.jpg</imageURL>`. 
 //$config['fritzbox_path'] = 'file:///var/media/ftp/';
 
+// optional: Whether or not to export photos of the contacts (Default: true - Export Photos)
+// Some Boxes do not support contact photos when you have not plugged in external memory
+// $config['export_photos'] = true;
+
 // multiple carddav adressbooks could be specified and will be merged together.
 
 // first
