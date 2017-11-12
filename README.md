@@ -78,6 +78,8 @@ Now you should have everything setup and checked out to a 'carddav2fb' directory
 	$config['addnames'] = false; // include additionalnames in fullname if existing
 	$config['orgname'] = false; // include organisation (company) in fullname if existing
 	
+	$config['images'] = true; // option to diable image processing and FTP-Upload
+	
 	$config['quickdial_keyword'] = 'Quickdial:'; // once activated you may add 'Quickdial:+49030123456:**709' to the contact note field and the number will be set as quickdialnumber in your FRITZ!Box. It is possible to add more quickdials for one contact each in a new line. The number used in in the quickdialnote must be found in as phonenumber in the contact as well.
 
 	// first

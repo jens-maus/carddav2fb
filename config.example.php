@@ -32,6 +32,8 @@ $config['suffix'] = false; // include suffix in fullname if existing
 $config['addnames'] = false; // include additionalnames in fullname if existing
 $config['orgname'] = false; // include organisation (company) in fullname if existing
 
+//$config['images'] = false; // option to disable image processing and FTP-Upload
+
 // Quickdial starting keyword in notes
 //$config['quickdial_keyword'] = 'Quickdial:'; // once activated you may add 'Quickdial:+49030123456:**709' to the contact note field and the number will set as quickdialnumber. You may add more quickdials for a single contact each in a new line
 
