@@ -78,7 +78,9 @@ Now you should have everything setup and checked out to a 'carddav2fb' directory
 	$config['addnames'] = false; // include additionalnames in fullname if existing
 	$config['orgname'] = false; // include organisation (company) in fullname if existing
 	
-	$config['quickdial_keyword'] = 'Quickdial:'; // once activated you may add 'Quickdial:+49030123456:**709' to the contact note field and the number will be set as quickdialnumber in your FRITZ!Box. It is possible to add more quickdials for one contact each in a new line
+	// $config['images'] = false; // option to disable image processing and FTP-Upload
+	
+	$config['quickdial_keyword'] = 'Quickdial:'; // once activated you may add 'Quickdial:+49030123456:**709' to the contact note field and the number will be set as quickdialnumber in your FRITZ!Box. It is possible to add more quickdials for one contact each in a new line. The number used in in the quickdialnote must be found in as phonenumber in the contact as well.
 
 	// first
 	$config['carddav'][0] = array(
@@ -97,4 +99,4 @@ This script is using third-party libraries for downloading VCards from CardDAV s
 This script is released under Public Domain.
 
 ## Authors
-Copyright (c) 2012-2016 Karl Glatz, Martin Rost, Jens Maus, Johannes Freiburger
+Copyright (c) 2012-2016 Karl Glatz, Martin Rost, Jens Maus, Johannes Freiburger, holzhannes
