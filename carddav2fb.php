@@ -90,8 +90,10 @@ flush(); // in case this script runs by php-cgi
 
 // upload the XML-file to the FRITZ!Box (CAUTION: this will overwrite all current entries in the phone book!!)
 print 'Upload data to FRITZ!Box @ ' . $config['fritzbox_ip'] . PHP_EOL;
-$client->upload_to_fb();
-print 'Done.' . PHP_EOL;
+if($client->upload_to_fb())
+  print 'Done.' . PHP_EOL;
+else
+  exit(1);
 
 flush(); // in case this script runs by php-cgi
 
@@ -248,6 +250,7 @@ class CardDAV2FB
           $prefix = '';
           $suffix = '';
           $orgname = '';
+          $formattedname = '';
 
           // Build name Parts if existing ans switch to true in config
           if(isset($name_arr['prefixes']) and $this->config['prefix'])
@@ -261,6 +264,9 @@ class CardDAV2FB
 
           if(isset($org_arr['name']) and $this->config['orgname'])
             $orgname = trim($org_arr['name']);
+
+          if (isset($vcard_obj->fn[0]))
+            $formattedname = $vcard_obj->fn[0];
 
           $firstname = trim($name_arr['firstname']);
           $lastname = trim($name_arr['lastname']);
@@ -349,9 +355,13 @@ class CardDAV2FB
           // make sure to trim whitespaces and double spaces
           $name = trim(str_replace('  ', ' ', $name));
 
+          // perform a fallback to formatted name, if we don't have any name and formatted name is available
+          if(empty($name) and !empty($formattedname))
+            $name = $formattedname;
+
           if(empty($name))
           {
-            print '  WARNING: No fullname, lastname or orgname found!';
+            print '  WARNING: No fullname, lastname, orgname or formatted name found!' . PHP_EOL;
             $name = 'UNKNOWN';
           }
 
@@ -576,7 +586,7 @@ class CardDAV2FB
         {
           // check if photo_data really contains JPEG data
           if((array_key_exists('type', $entry['photo_data'][0])) and (is_array($entry['photo_data'][0]['type'])) and
-             ($entry['photo_data'][0]['type'][0] == 'jpeg' or $entry['photo_data'][0]['type'][0] == 'jpg'))
+             ($entry['photo_data'][0]['type'][0] == 'jpeg' or $entry['photo_data'][0]['type'][0] == 'jpg' or $entry['photo_data'][0]['type'][0] == 'image/jpeg'))
           {
             // get photo, rename, base64 convert and save as jpg
             $photo_data = $entry['photo_data'][0]['value'];
@@ -782,20 +792,6 @@ class CardDAV2FB
     }
     else
       print " ERROR: couldn't connect to FTP server '" . $ftp_server . "'." . PHP_EOL;
-
-    // in case numeric IP is given, try to resolve to hostname. Otherwise Fritzbox may decline login, because it is determine to be (prohibited) remote access
-    $hostname = $this->config['fritzbox_ip'];
-    if(filter_var($hostname, FILTER_VALIDATE_IP))
-    {
-      $hostname = gethostbyaddr($hostname);
-      if($hostname == $this->config['fritzbox_ip'])
-        print " WARNING: Unable to get hostname for IP address (" . $this->config['fritzbox_ip'] . ") <" . $hostname . "<" . PHP_EOL;
-      else
-      {
-        print " INFO: Given IP address (" . $this->config['fritzbox_ip'] . ") has hostname " . $hostname . "." . PHP_EOL;
-        $this->config['fritzbox_ip'] = $hostname;
-      }
-    }
     
     // lets post the phonebook xml to the FRITZ!Box
     print " Uploading Phonebook XML to " . $this->config['fritzbox_ip'] . PHP_EOL;
@@ -826,6 +822,8 @@ class CardDAV2FB
     catch(Exception $e)
     {
       print "  ERROR: " . $e->getMessage() . PHP_EOL; // show the error message in anything failed
+      return false;
     }
+    return true;
   }
 }
