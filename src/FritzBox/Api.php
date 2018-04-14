@@ -25,13 +25,11 @@ class Api
      */
     public function __construct($url = 'https://fritz.box', $user_name = false, $password = false, $force_local_login = false)
     {
-        // init the config object
-        // $this->config = new Config();
-
-        // set FRITZ!Box-IP and URL
         $this->url = $url;
         $this->username = $user_name;
         $this->password = $password;
+
+        $this->client = new Client();
 
         $this->sid = $this->initSID();
     }
@@ -65,63 +63,50 @@ class Api
         return $output;
     }
 
-    public function doPostFile($formfields = array(), $filefileds = array())
+    public function doPostFile($formfields = array(), $filefields = array())
     {
-        $ch = curl_init();
-
         // add the sid, if it is already set
         if ($this->sid != '0000000000000000') {
-            // 'sid' MUST be the first POST variable!!! (otherwise it will not work!!)
-            // therfore we use array_merge to ensuere the foreach outputs 'sid' fist
             $formfields = array_merge(array('sid' => $this->sid), $formfields);
-            //$formfields['sid'] = $this->sid;
         }
-        curl_setopt($ch, CURLOPT_URL, $this->url . '/cgi-bin/firmwarecfg');
-        curl_setopt($ch, CURLOPT_POST, 1);
 
-        // enable for debugging:
-        //curl_setopt($ch, CURLOPT_VERBOSE, TRUE);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $uri = $this->url . '/cgi-bin/firmwarecfg';
 
-        // if filefileds not specified ('@/path/to/file.xml;type=text/xml' works fine)
-        if (empty($filefileds)) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $formfields); // http_build_query
+        // if filefields not specified ('@/path/to/file.xml;type=text/xml' works fine)
+        if (empty($filefields)) {
+            $request = new Request('POST', $uri, [
+               'Content-Type' => 'application/x-www-form-urlencoded'
+            ], http_build_query($form_params, null, '&'));
         }
-        // post calculated raw data
         else {
-            $header = $this->_create_custom_file_post_header($formfields, $filefileds);
-            curl_setopt(
-                $ch,
-                CURLOPT_HTTPHEADER,
-                array(
-                'Content-Type: multipart/form-data; boundary=' . $header['delimiter'], 'Content-Length: ' . strlen($header['data']) )
-                );
+            // multipart request
+            $multiPart = $this->multiPart($formfields, $filefields);
 
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $header['data']);
+            $request = new Request('POST', $uri, [
+               'Content-Type' => 'multipart/form-data; boundary=' . $multiPart['delimiter'],
+               'Content-Length' => strlen($multiPart['data'])
+            ], $multiPart['data']);
         }
 
-        $output = curl_exec($ch);
+        $response = $this->client->send($request);
 
-        // curl error
-        if (curl_errno($ch)) {
-            throw new \Exception(curl_error($ch)." (".curl_errno($ch).")");
+        if (200 !== $response->getStatusCode()) {
+            throw new \Exception('Received HTTP ' . $response->getStatusCode());
         }
+
+        $body = (string)$response->getBody();
 
         // finger out an error message, if given
-        preg_match('@<p class="ErrorMsg">(.*?)</p>@is', $output, $matches);
+        preg_match('@<p class="ErrorMsg">(.*?)</p>@is', $body, $matches);
         if (isset($matches[1])) {
             throw new \Exception(str_replace('&nbsp;', ' ', $matches[1]));
         }
 
-        curl_close($ch);
-        return $output;
+        return $body;
     }
 
-    private function _create_custom_file_post_header($postFields, $fileFields)
+    private function multiPart($postFields, $fileFields)
     {
-        // form field separator
-        $delimiter = '-------------' . uniqid();
-
         /*
             // file upload fields: name => array(type=>'mime/type',content=>'raw data')
             $fileFields = array(
@@ -138,6 +123,7 @@ class Api
          */
 
         $data = '';
+        $delimiter = '-------------' . uniqid();
 
         // populate normal fields first (simpler)
         foreach ($postFields as $name => $content) {
@@ -147,6 +133,7 @@ class Api
             $data .= $content;
             $data .= "\r\n";
         }
+
         // populate file fields
         foreach ($fileFields as $name => $file) {
             $data .= "--" . $delimiter . "\r\n";
@@ -162,6 +149,7 @@ class Api
             // the file itself (note: there's no encoding of any kind)
             $data .= $file['content'] . "\r\n";
         }
+
         // last delimiter
         $data .= "--" . $delimiter . "--\r\n";
 
@@ -190,8 +178,6 @@ class Api
         }
 
         $url = $this->url . $getpage . http_build_query($params);
-
-        $this->client = $this->client ?? new Client();
         $response = $this->client->send(new Request('GET', $url));
 
         if (200 !== $response->getStatusCode()) {

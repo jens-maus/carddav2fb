@@ -138,16 +138,15 @@ class Converter
                 throw new \Exception("Invalid conversion definition for `$property`");
             }
 
-            // print_r($tokens);
+            print_r($tokens);
             $replacements = [];
 
             // check card for tokens
             foreach ($tokens[1] as $idx => $token) {
                 // echo $idx.PHP_EOL;
                 if (isset($this->card->$token) && $this->card->$token) {
-                    // echo $tokens[0][$idx].PHP_EOL;
+                    echo $tokens[0][$idx].": ".$this->card->$token.PHP_EOL;
                     $replacements[$token] = $this->card->$token;
-                    // echo $this->card->$token;
                 }
             }
 
@@ -157,10 +156,18 @@ class Converter
             }
 
             // replace
-            return preg_replace_callback($token_format, function ($match) use ($replacements) {
+            $result = preg_replace_callback($token_format, function ($match) use ($replacements) {
                 $token = $match[1];
                 return $replacements[$token];
             }, $rule);
+
+
+            if (count($replacements) === 3) {#
+                error_log(print_r($replacements, 1));
+                echo $result;
+                die;
+            }
+
         }
 
         error_log("No data for conversion `$property`");

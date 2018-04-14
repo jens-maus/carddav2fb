@@ -46,6 +46,7 @@ $config = [
 			],
 		],
 		'realName' => [
+			'{firstname} {lastname} ({organization})',
 			'{lastname}, {firstname}',
 			'{fullname}',
 			'{organization}'
