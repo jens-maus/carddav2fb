@@ -1,0 +1,23 @@
+{
+    "name": "andig/carddav2fb",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "andig",
+            "email": "cpuidle@gmx.de"
+        }
+    ],
+    "require": {
+        "php": "^7.0",
+        "symfony/console": "^3.0",
+        "guzzlehttp/guzzle": "^6.0",
+        "ringcentral/psr7": "^1.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Andig\\": "src/"
+        },
+        "files": ["src/functions.php"]
+    }
+}
