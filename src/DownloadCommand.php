@@ -35,9 +35,13 @@ class DownloadCommand extends Command
         $backend = backendProvider($server);
         $progress = new ProgressBar($output);
 
-        if ($inputFile = $input->getArgument('filename')) {
+        if ($filename = $input->getArgument('filename')) {
             // read from file
-            $vcards = json_decode(file_get_contents($inputFile));
+            $vcards = json_decode(file_get_contents($filename));
+
+            if (!is_array($vcards)) {
+                throw new \Exception(sprintf('Could not read unparsed vcards from %s', $filename));
+            }
         }
         else {
             // download
