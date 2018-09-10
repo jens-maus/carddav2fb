@@ -33,18 +33,25 @@ class Backend
     private $url_vcard_extension = '.vcf';
 
     /**
-    * Authentication: username
-    *
-    * @var  string
-    */
+     * Authentication: username
+     *
+     * @var  string
+     */
     private $username;
 
     /**
-    * Authentication: password
-    *
-    * @var  string
-    */
+     * Authentication: password
+     *
+     * @var  string
+     */
     private $password;
+
+    /**
+     * Authentication: method
+     *
+     * @var  string|null
+     */
+    private $authentication;
 
     /**
      * Progress callback
@@ -88,10 +95,11 @@ class Backend
     /**
      * Set credentials
      */
-    public function setAuth(string $username, string $password)
+    public function setAuth(string $username, string $password, string $method = null)
     {
         $this->username = $username;
         $this->password = $password;
+        $this->authentication = $method;
     }
 
     /**
@@ -112,15 +120,19 @@ class Backend
         throw new \Exception('Received HTTP ' . $response->getStatusCode());
     }
 
+    private function getRequestOptions($options = [])
+    {
+        if ($this->username) {
+            $options['auth'] = [$this->username, $this->password, $this->authentication];
+        }
+
+        return $options;
+    }
+
     public function fetchImage($uri)
     {
         $this->client = $this->client ?? new Client();
-        $request = new Request('GET', $uri);
-
-        if ($this->username) {
-            $credentials = base64_encode($this->username.':'.$this->password);
-            $request = $request->withHeader('Authorization', 'Basic '.$credentials);
-        }
+        $request = new Request('GET', $uri, $this->getRequestOptions());
 
         $response = $this->client->send($request);
 
@@ -210,9 +222,9 @@ class Backend
     private function query($url, $method, $content = null, $content_type = null)
     {
         $this->client = $this->client ?? new Client();
-        $request = new Request($method, $url, [
+        $request = new Request($method, $url, $this->getRequestOptions([
             'Depth' => '1'
-        ]);
+        ]));
 
         if ($content_type) {
             $request = $request->withHeader('Content-type', $content_type);
@@ -220,11 +232,6 @@ class Backend
 
         if ($content) {
             $request = $request->withBody($content);
-        }
-
-        if ($this->username) {
-            $credentials = base64_encode($this->username.':'.$this->password);
-            $request = $request->withHeader('Authorization', 'Basic '.$credentials);
         }
 
         $response = $this->client->send($request);
