@@ -46,6 +46,7 @@ else
 $config['tmp_dir'] = sys_get_temp_dir();
 $config['fritzbox_ip'] = 'fritz.box';
 $config['fritzbox_ip_ftp'] = $config['fritzbox_ip'];
+$config['fritzbox_ip_ftp_port'] = 21;
 $config['fritzbox_force_local_login'] = false;
 $config['phonebook_number'] = '0';
 $config['phonebook_name'] = 'Telefonbuch';
@@ -698,11 +699,12 @@ class CardDAV2FB
 
     // perform an ftps-connection to copy over the photos to a specified directory
     $ftp_server = $this->config['fritzbox_ip_ftp'];
-    $conn_id = ftp_ssl_connect($ftp_server);
+    $ftp_port = $this->config['fritzbox_ip_ftp_port'];
+    $conn_id = ftp_ssl_connect($ftp_server,$ftp_port);
     if($conn_id == false)
     {
       print " WARNING: Secure connection to FTP-server '" . $ftp_server . "' failed, retrying without SSL." . PHP_EOL;
-      $conn_id = ftp_connect($ftp_server);
+      $conn_id = ftp_connect($ftp_server,$ftp_port);
     }
 
     if($conn_id != false)
