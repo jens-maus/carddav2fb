@@ -2,9 +2,7 @@
 
 namespace Andig\FritzBox;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Request;
-use Ringcentral\Psr7;
+use Andig\Http\ClientTrait;
 
 /**
  * Copyright (c) 2019 Andreas Götz
@@ -12,18 +10,19 @@ use Ringcentral\Psr7;
  */
 class Api
 {
-    private $username;
-    private $password;
-    private $url;
+    use ClientTrait;
 
+    /** @var  string */
+    protected $username;
+
+    /** @var  string */
+    protected $password;
+
+    /** @var  string */
+    protected $url;
+
+    /** @var  string */
     protected $sid = '0000000000000000';
-
-    /**
-     * Do not use this directly! Rather use {@see getClient()}
-     *
-     * @var Client
-     */
-    private $client;
 
     /**
      * Execute fb login
@@ -47,31 +46,6 @@ class Api
     public function getSID()
     {
         return $this->sid;
-    }
-
-    /**
-     * Get initialized HTTP client
-     *
-     * @return Client
-     */
-    private function getClient(): Client
-    {
-        if (!$this->client) {
-            $this->client = new Client($this->getClientOptions());
-        }
-
-        return $this->client;
-    }
-
-    /**
-     * HTTP client options
-     *
-     * @param array $options
-     * @return array
-     */
-    private function getClientOptions($options = []): array
-    {
-        return $options;
     }
 
     /**
