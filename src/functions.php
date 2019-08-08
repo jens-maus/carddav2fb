@@ -32,7 +32,7 @@ function backendProvider(array $config): Backend
  *
  * @param Backend $backend
  * @param callable $callback
- * @return object[]
+ * @return mixed[]
  */
 function download(Backend $backend, $substitutes, callable $callback=null): array
 {
@@ -81,7 +81,7 @@ function getFtpConnection($url, $user, $password, $directory, $secure)
 /**
  * upload image files via ftp to the fritzbox fonpix directory
  *
- * @param object[] $vcards downloaded vCards
+ * @param mixed[] $vcards downloaded vCards
  * @param array $config
  * @param array $phonebook
  * @param callable $callback
@@ -132,10 +132,10 @@ function uploadImages(array $vcards, array $config, array $phonebook, callable $
             if ($vcard->PHOTO['TYPE'] != 'JPEG') {
                 continue;
             } else {
-                $vcardImage = $vcard->PHOTO;
+                $vcardImage = (string)$vcard->PHOTO;
             }
         } elseif ($vcard->VERSION == '4.0') {                       // see: https://github.com/sabre-io/vobject/issues/458
-            $value = explode(',', $vcard->PHOTO, 2);
+            $value = explode(',', (string)$vcard->PHOTO, 2);
             if (!preg_match("/jpeg/", $value[0])) {
                 continue;
             } else {
@@ -148,7 +148,7 @@ function uploadImages(array $vcards, array $config, array $phonebook, callable $
         $countAllImages++;
 
         // Check if we can skip upload
-        $newFTPimage = sprintf('%1$s_%2$s.jpg', $vcard->UID, $timestampPostfix);
+        $newFTPimage = sprintf('%1$s_%2$s.jpg', (string)$vcard->UID, $timestampPostfix);
         if (array_key_exists((string)$vcard->UID, $mapFTPUIDtoFTPImageName)) {
             $currentFTPimage = $mapFTPUIDtoFTPImageName[(string)$vcard->UID];
             if (ftp_size($ftp_conn, $currentFTPimage) == strlen($vcardImage)) {
@@ -193,8 +193,8 @@ EOD
 /**
  * Dissolve the groups of iCloud contacts
  *
- * @param object[] $vcards
- * @return object[]
+ * @param mixed[] $vcards
+ * @return mixed[]
  */
 function dissolveGroups(array $vcards): array
 {
@@ -217,7 +217,7 @@ function dissolveGroups(array $vcards): array
     // assign group memberships
     foreach ($vcards as $vcard) {
         foreach ($groups as $group => $members) {
-            if (in_array($vcard->UID, $members)) {
+            if (in_array((string)$vcard->UID, $members)) {
                 if (!isset($vcard->GROUP)) {
                     $vcard->add('GROUP', []);
                 }
@@ -233,9 +233,9 @@ function dissolveGroups(array $vcards): array
 /**
  * Filter included/excluded vcards
  *
- * @param object[] $vcards
+ * @param mixed[] $vcards
  * @param array $filters
- * @return object[]
+ * @return mixed[]
  */
 function filter(array $vcards, array $filters): array
 {
@@ -297,7 +297,7 @@ function countFilters(array $filters): int
 /**
  * Check a list of filters against a card
  *
- * @param object $vcard
+ * @param mixed $vcard
  * @param array $filters
  * @return bool
  */
@@ -340,7 +340,7 @@ function filterMatches($attribute, $filterValues): bool
 /**
  * Export cards to fritzbox xml
  *
- * @param object[] $cards
+ * @param mixed[] $cards
  * @param array $conversions
  * @return SimpleXMLElement     the XML phone book in Fritz Box format
  */
@@ -429,7 +429,6 @@ function uploadPhonebook(SimpleXMLElement $xmlPhonebook, array $config)
     }
 }
 
-
 /**
  * Downloads the phone book from Fritzbox
  *
@@ -460,12 +459,11 @@ function downloadPhonebook(array $fritzbox, array $phonebook)
     return $xmlPhonebook;
 }
 
-
 /**
  * Get quickdial and vanity special attributes from given XML phone book
  *
  * @param   SimpleXMLElement                $xmlPhonebook
- * @return  array|array<string, object>     [] or map with {phonenumber@CardDavUID}=>SimpleXMLElement-Attributes
+ * @return  array|array<string, mixed>     [] or map with {phonenumber@CardDavUID}=>SimpleXMLElement-Attributes
  */
 function getPhoneNumberAttributes(SimpleXMLElement $xmlPhonebook)
 {
@@ -485,7 +483,6 @@ function getPhoneNumberAttributes(SimpleXMLElement $xmlPhonebook)
     }
     return $specialAttributes;
 }
-
 
 /**
  * Restore special attributes (quickdial, vanity) in given target phone book
@@ -515,7 +512,6 @@ function mergePhoneNumberAttributes(SimpleXMLElement $xmlTargetPhoneBook, array 
     return $xmlTargetPhoneBook;
 }
 
-
 /**
  * Build unique key with normalized phone number to lookup phonebook attributes
  * normalizing number means: remove all non-"+" and non-number characters like SPACE, MINUS, SLASH...
@@ -528,7 +524,6 @@ function generateUniqueKey(string $number, string $carddav_uid)
 {
     return preg_replace("/[^\+0-9]/", "", $number)."@".$carddav_uid;
 }
-
 
 /**
  * Check if special attributes already set (e.g., via CardDav extension 'X-FB-QUICKDIAL' / 'X-FB-VANITY')

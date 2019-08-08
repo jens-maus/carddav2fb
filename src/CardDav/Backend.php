@@ -184,9 +184,9 @@ EOD
      * If elements are declared as to be substituted,
      * the data from possibly linked sources are embedded directly into the vCard
      *
-     * @param   object $vcard single parsed vCard
+     * @param   mixed $vcard single parsed vCard
      * @param   string $property the property whose value is to be replaced ('LOGO', 'KEY', 'PHOTO' or 'SOUND')
-     * @return  object single vCard with embedded value
+     * @return  mixed single vCard with embedded value
      */
     private function embedBase64($vcard, string $property)
     {
@@ -243,8 +243,8 @@ EOD
      * ->LASTNAME, ->FIRSTNAME etc. extracted from ->N
      * ->PHOTO with embedded data from linked sources (equal for KEY, LOGO or SOUND)
      *
-     * @param object $vcard
-     * @return object
+     * @param mixed $vcard
+     * @return mixed
      */
     public function enrichVcard($vcard)
     {

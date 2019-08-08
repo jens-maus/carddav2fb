@@ -30,7 +30,7 @@ class Converter
      * Convert Vcard to FritzBox XML
      * All conversion steps operate on $this->contact
      *
-     * @param object $card
+     * @param mixed $card
      * @return SimpleXMLElement[]
      */
     public function convert($card): array
@@ -91,7 +91,7 @@ class Converter
     /**
      * add VIP node
      *
-     * @param object $card
+     * @param mixed $card
      * @return void
      */
     private function addVip($card)
@@ -128,7 +128,7 @@ class Converter
     /**
      * add emails nodes
      *
-     * @param array $adresses
+     * @param array $addresses
      * @return void
      */
     private function addEmail(array $addresses)
@@ -149,7 +149,7 @@ class Converter
      * Return an array of prequalified phone numbers. This is neccesseary to
      * handle the maximum of nine phone numbers per FRITZ!Box phonebook contacts
      *
-     * @param object $card
+     * @param mixed $card
      * @return array
      */
     private function getPhoneNumbers($card): array
@@ -232,7 +232,7 @@ class Converter
      * Return an array of prequalified email adresses. There is no limitation
      * for the amount of email adresses in FRITZ!Box phonebook contacts.
      *
-     * @param object $card
+     * @param mixed $card
      * @return array
      */
     private function getEmailAdresses($card): array
@@ -250,7 +250,7 @@ class Converter
                 'email' => (string)$address,
             ];
 
-            $mailTypes = isset($card->MAIL[$key]->parameters['TYPE']) ? strtoupper($card->MAIL[$key]->parameters['TYPE']) : '';
+            $mailTypes = isset($card->EMAIL[$key]->parameters['TYPE']) ? strtoupper($card->EMAIL[$key]->parameters['TYPE']) : '';
             foreach ($emailTypes as $emailType => $value) {
                 if (strpos($mailTypes, strtoupper($emailType)) !== false) {
                     $addAddress['classifier'] = strtolower($value);
@@ -267,7 +267,7 @@ class Converter
     /**
      * Return class property with applied conversion rules
      *
-     * @param object $card
+     * @param mixed $card
      * @param string $property
      * @return string
      */
