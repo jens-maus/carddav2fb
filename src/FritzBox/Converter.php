@@ -16,8 +16,8 @@ class Converter
     /** @var SimpleXMLElement */
     private $contact;
 
-    private $uniqueDials = [];
     private $phoneSort = [];
+    private $uniqueDials = [];
 
     public function __construct(array $config)
     {
@@ -47,7 +47,7 @@ class Converter
 
         foreach (array_chunk($allNumbers, 9) as $numbers) {
             $this->contact = new SimpleXMLElement('<contact />');
-            $this->contact->addChild('carddav_uid', $card->UID);    // reference for image upload
+            $this->contact->addChild('carddav_uid', (string)$card->UID);    // reference for image upload
 
             $this->addVip($card);
             $this->addPhone($numbers);
@@ -65,7 +65,7 @@ class Converter
             // add photo
             if (isset($card->PHOTO) && isset($card->IMAGEURL)) {
                 if (isset($this->configImagePath)) {
-                    $person->addChild('imageURL', $card->IMAGEURL);
+                    $person->addChild('imageURL', (string)$card->IMAGEURL);
                 }
             }
 
@@ -158,7 +158,7 @@ class Converter
             return [];
         }
 
-        $res = [];
+        $phoneNumbers = [];
 
         $replaceCharacters = $this->config['phoneReplaceCharacters'] ?? [];
         $phoneTypes = $this->config['phoneTypes'] ?? [];
@@ -174,7 +174,7 @@ class Converter
             $telTypes = isset($card->TEL[$key]->parameters['TYPE']) ? strtoupper($card->TEL[$key]->parameters['TYPE']) : '';
             foreach ($phoneTypes as $phoneType => $value) {
                 if (strpos($telTypes, strtoupper($phoneType)) !== false) {
-                    $type = strtolower($value);
+                    $type = strtolower((string)$value);
                     break;
                 }
             }
@@ -184,37 +184,37 @@ class Converter
 
             $addNumber = [
                 'type'   => $type,
-                'number' => $number,
+                'number' => (string)$number,
             ];
 
             /* Add quick dial and vanity numbers if card has xquickdial or xvanity attributes set
              * A phone number with 'PREF' type is needed to activate the attribute.
              * For quick dial numbers Fritz!Box will add the prefix **7 automatically.
              * For vanity numbers Fritz!Box will add the prefix **8 automatically. */
-            foreach (['QUICKDIAL', 'VANITY'] as $property) {
-                $attr = 'X-FB-' . $property;
+            foreach (['quickdial', 'vanity'] as $property) {
+                $attr = 'X-FB-' . strtoupper($property);
                 if (!isset($card->$attr)) {
                     continue;
                 }
                 if (strpos($telTypes, 'PREF') === false) {
                     continue;
                 }
+                $specialAttribute = (string)$card->$attr;
                 // number unique?
-                if (in_array((string)$card->$attr, $this->uniqueDials)) {
-                    error_log(sprintf("The %s number >%s< has been assigned more than once (%s)!", $property, $card->$attr, $number));
+                if (in_array($specialAttribute, $this->uniqueDials)) {
+                    error_log(sprintf("The %s number >%s< has been assigned more than once (%s)!", $property, $specialAttribute, $number));
                     continue;
                 }
-
-                $addNumber[$property] = $card->$attr;
-                $this->uniqueDials[] = $card->$attr;                    // keep list of unique numbers
+                $this->uniqueDials[] = $specialAttribute;                    // keep list of unique numbers
+                $addNumber[$property] = $specialAttribute;
             }
 
-            $res[] = $addNumber;
+            $phoneNumbers[] = $addNumber;
         }
 
         // sort phone numbers
-        if (count($res)) {
-            usort($res, function ($a, $b) {
+        if (count($phoneNumbers)) {
+            usort($phoneNumbers, function ($a, $b) {
                 $idx1 = array_search($a['type'], $this->phoneSort, true);
                 $idx2 = array_search($b['type'], $this->phoneSort, true);
                 if ($idx1 == $idx2) {
@@ -225,7 +225,7 @@ class Converter
             });
         }
 
-        return $res;
+        return $phoneNumbers;
     }
 
     /**
