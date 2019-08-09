@@ -249,12 +249,12 @@ EOD
     public function enrichVcard($vcard)
     {
         if (isset($vcard->FN)) {                                // redundant for downward compatibility
-            $vcard->add('FULLNAME', (string)$vcard->FN);
+            $vcard->FULLNAME = (string)$vcard->FN;
         }
         if (isset($vcard->N)) {                                 // add 'N'-values to additional separate fields
             foreach ($this->parseName($vcard->N) as $key => $value) {
                 if (!empty($value)) {
-                    $vcard->add($key, $value);
+                    $vcard->$key = $value;
                 }
             }
         }

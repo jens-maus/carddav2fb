@@ -91,6 +91,7 @@ function uploadImages(array $vcards, array $config, array $phonebook, callable $
 {
     $countUploadedImages = 0;
     $countAllImages = 0;
+    $vcardImage = '';
     $mapFTPUIDtoFTPImageName = [];                      // "9e40f1f9-33df-495d-90fe-3a1e23374762" => "9e40f1f9-33df-495d-90fe-3a1e23374762_190106123906.jpg"
     $timestampPostfix = substr(date("YmdHis"), 2);      // timestamp, e.g., 190106123906
 
@@ -124,17 +125,17 @@ function uploadImages(array $vcards, array $config, array $phonebook, callable $
         }
         // Occurs when embedding was not possible during download (for example, no access to linked data)
         if (preg_match("/^http/", $vcard->PHOTO)) {             // if the embed failed
-            error_log(sprintf(PHP_EOL . 'The image for UID %s can not be accessed! ', $vcard->UID));
+            error_log(sprintf(PHP_EOL . 'The image for UID %s can not be accessed! ', (string)$vcard->UID));
             continue;
         }
         // Fritz!Box only accept jpg-files
-        if ($vcard->VERSION == '3.0') {
+        if ((string)$vcard->VERSION == '3.0') {
             if ($vcard->PHOTO['TYPE'] != 'JPEG') {
                 continue;
             } else {
                 $vcardImage = (string)$vcard->PHOTO;
             }
-        } elseif ($vcard->VERSION == '4.0') {                       // see: https://github.com/sabre-io/vobject/issues/458
+        } elseif ((string)$vcard->VERSION == '4.0') {                       // see: https://github.com/sabre-io/vobject/issues/458
             $value = explode(',', (string)$vcard->PHOTO, 2);
             if (!preg_match("/jpeg/", $value[0])) {
                 continue;
@@ -148,12 +149,13 @@ function uploadImages(array $vcards, array $config, array $phonebook, callable $
         $countAllImages++;
 
         // Check if we can skip upload
-        $newFTPimage = sprintf('%1$s_%2$s.jpg', (string)$vcard->UID, $timestampPostfix);
-        if (array_key_exists((string)$vcard->UID, $mapFTPUIDtoFTPImageName)) {
-            $currentFTPimage = $mapFTPUIDtoFTPImageName[(string)$vcard->UID];
+        $uid = (string)$vcard->UID;
+        $newFTPimage = sprintf('%1$s_%2$s.jpg', $uid, $timestampPostfix);
+        if (array_key_exists($uid, $mapFTPUIDtoFTPImageName)) {
+            $currentFTPimage = $mapFTPUIDtoFTPImageName[$uid];
             if (ftp_size($ftp_conn, $currentFTPimage) == strlen($vcardImage)) {
                 // No upload needed, but store old image URL in vCard
-                $vcard->add('IMAGEURL', $imgPath . $currentFTPimage);
+                $vcard->IMAGEURL = $imgPath . $currentFTPimage;
                 continue;
             }
             // we already have an old image, but the new image differs in size
@@ -169,7 +171,7 @@ function uploadImages(array $vcards, array $config, array $phonebook, callable $
         if (ftp_fput($ftp_conn, $newFTPimage, $memstream, FTP_BINARY)) {
             $countUploadedImages++;
             // upload of new image done, now store new image URL in vCard (new Random Postfix!)
-            $vcard->add('IMAGEURL', $imgPath . $newFTPimage);
+            $vcard->IMAGEURL = $imgPath . $newFTPimage;
         } else {
             error_log(PHP_EOL."Error uploading $newFTPimage.");
             unset($vcard->PHOTO);                              // no wrong link will set in phonebook
