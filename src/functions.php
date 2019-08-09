@@ -123,19 +123,21 @@ function uploadImages(array $vcards, array $config, array $phonebook, callable $
         if (!isset($vcard->PHOTO)) {                            // skip vCard without image
             continue;
         }
+        $uid = (string)$vcard->UID;
         // Occurs when embedding was not possible during download (for example, no access to linked data)
         if (preg_match("/^http/", $vcard->PHOTO)) {             // if the embed failed
-            error_log(sprintf(PHP_EOL . 'The image for UID %s can not be accessed! ', (string)$vcard->UID));
+            error_log(sprintf(PHP_EOL . 'The image for UID %s can not be accessed! ', $uid));
             continue;
         }
         // Fritz!Box only accept jpg-files
-        if ((string)$vcard->VERSION == '3.0') {
+        $version = (string)$vcard->VERSION;
+        if ($version == '3.0') {
             if ($vcard->PHOTO['TYPE'] != 'JPEG') {
                 continue;
             } else {
                 $vcardImage = (string)$vcard->PHOTO;
             }
-        } elseif ((string)$vcard->VERSION == '4.0') {                       // see: https://github.com/sabre-io/vobject/issues/458
+        } elseif ($version == '4.0') {                       // see: https://github.com/sabre-io/vobject/issues/458
             $value = explode(',', (string)$vcard->PHOTO, 2);
             if (!preg_match("/jpeg/", $value[0])) {
                 continue;
@@ -147,15 +149,15 @@ function uploadImages(array $vcards, array $config, array $phonebook, callable $
         }
 
         $countAllImages++;
+        $imgURL = 'IMAGEURL';                                       // usualy $vcard->IMAGEURL is sufficient - but Travis CI disagrees
 
         // Check if we can skip upload
-        $uid = (string)$vcard->UID;
         $newFTPimage = sprintf('%1$s_%2$s.jpg', $uid, $timestampPostfix);
         if (array_key_exists($uid, $mapFTPUIDtoFTPImageName)) {
             $currentFTPimage = $mapFTPUIDtoFTPImageName[$uid];
             if (ftp_size($ftp_conn, $currentFTPimage) == strlen($vcardImage)) {
                 // No upload needed, but store old image URL in vCard
-                $vcard->IMAGEURL = $imgPath . $currentFTPimage;
+                $vcard->$imgURL = $imgPath . $currentFTPimage;
                 continue;
             }
             // we already have an old image, but the new image differs in size
@@ -171,11 +173,11 @@ function uploadImages(array $vcards, array $config, array $phonebook, callable $
         if (ftp_fput($ftp_conn, $newFTPimage, $memstream, FTP_BINARY)) {
             $countUploadedImages++;
             // upload of new image done, now store new image URL in vCard (new Random Postfix!)
-            $vcard->IMAGEURL = $imgPath . $newFTPimage;
+            $vcard->$imgURL = $imgPath . $newFTPimage;
         } else {
             error_log(PHP_EOL."Error uploading $newFTPimage.");
             unset($vcard->PHOTO);                              // no wrong link will set in phonebook
-            unset($vcard->IMAGEURL);                           // no wrong link will set in phonebook
+            unset($vcard->$imgURL);                            // no wrong link will set in phonebook
         }
         fclose($memstream);
     }
