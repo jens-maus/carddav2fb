@@ -87,7 +87,7 @@ function getFtpConnection($url, $user, $password, $directory, $secure)
  * @param callable $callback
  * @return mixed false or [number of uploaded images, number of total found images]
  */
-function uploadImages(array $vcards, array $config, array $phonebook, callable $callback=null)
+function uploadImages($vcards, array $config, array $phonebook, callable $callback=null)
 {
     $countUploadedImages = 0;
     $countAllImages = 0;
