@@ -81,7 +81,7 @@ function getFtpConnection($url, $user, $password, $directory, $secure)
 /**
  * upload image files via ftp to the fritzbox fonpix directory
  *
- * @param mixed[] $vcards downloaded vCards
+ * @param object $vcards downloaded vCards
  * @param array $config
  * @param array $phonebook
  * @param callable $callback
