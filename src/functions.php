@@ -249,12 +249,6 @@ function dissolveGroups(array $vcards): array
  */
 function filter(array $vcards, array $filters): array
 {
-    $vcf = '';
-    foreach ($vcards as $vcard) {
-        $vcf = $vcf . $vcard->serialize();
-    }
-    file_put_contents('TEST.txt', $vcf);
-
     // include selected
     $includeFilter = $filters['include'] ?? [];
 
@@ -310,7 +304,7 @@ function countFilters(array $filters): int
 }
 
 /**
- * Check a list of filters against the vcard properties CATEGOTIES and/or GROUPS
+ * Check a list of filters against the vcard properties CATEGORIES and/or GROUPS
  *
  * @param mixed $vcard
  * @param array $filters
@@ -567,6 +561,8 @@ function getQuickdials(SimpleXMLElement $xmlPhonebook)
             }
         }
     }
+    ksort($quickdialNames);                                 // ascending: lowest quickdial first
+
     return $quickdialNames;
 }
 
@@ -584,6 +580,11 @@ function uploadBackgroundImage($phonebook, array $config)
         error_log('No quickdial numbers are set for a background image upload');
         return;
     }
+    if (key($quickdials) > 9) {    // usual the pointer should on the first element; with 7.3.*: array_key_first()
+        error_log('Quickdial numbers out of range for a background image upload');
+        return;
+    }
+
     $image = new BackgroundImage();
     $image->uploadImage($quickdials, $config);
 }
