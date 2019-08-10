@@ -81,13 +81,13 @@ function getFtpConnection($url, $user, $password, $directory, $secure)
 /**
  * upload image files via ftp to the fritzbox fonpix directory
  *
- * @param object $vcards downloaded vCards
+ * @param mixed[] $vcards downloaded vCards
  * @param array $config
  * @param array $phonebook
  * @param callable $callback
  * @return mixed false or [number of uploaded images, number of total found images]
  */
-function uploadImages($vcards, array $config, array $phonebook, callable $callback=null)
+function uploadImages(array $vcards, array $config, array $phonebook, callable $callback=null)
 {
     $countUploadedImages = 0;
     $countAllImages = 0;
@@ -115,6 +115,7 @@ function uploadImages($vcards, array $config, array $phonebook, callable $callba
         $mapFTPUIDtoFTPImageName[$ftpUid] = $ftpFile;
     }
 
+    /** @var \stdClass $vcard */
     foreach ($vcards as $vcard) {
         if (is_callable($callback)) {
             ($callback)();
@@ -123,7 +124,9 @@ function uploadImages($vcards, array $config, array $phonebook, callable $callba
         if (!isset($vcard->PHOTO)) {                            // skip vCard without image
             continue;
         }
+
         $uid = (string)$vcard->UID;
+
         // Occurs when embedding was not possible during download (for example, no access to linked data)
         if (preg_match("/^http/", $vcard->PHOTO)) {             // if the embed failed
             error_log(sprintf(PHP_EOL . 'The image for UID %s can not be accessed! ', $uid));
@@ -149,7 +152,6 @@ function uploadImages($vcards, array $config, array $phonebook, callable $callba
         }
 
         $countAllImages++;
-        $imgURL = 'IMAGEURL';                                       // usualy $vcard->IMAGEURL is sufficient - but Travis CI disagrees
 
         // Check if we can skip upload
         $newFTPimage = sprintf('%1$s_%2$s.jpg', $uid, $timestampPostfix);
@@ -157,7 +159,7 @@ function uploadImages($vcards, array $config, array $phonebook, callable $callba
             $currentFTPimage = $mapFTPUIDtoFTPImageName[$uid];
             if (ftp_size($ftp_conn, $currentFTPimage) == strlen($vcardImage)) {
                 // No upload needed, but store old image URL in vCard
-                $vcard->$imgURL = $imgPath . $currentFTPimage;
+                $vcard->IMAGEURL = $imgPath . $currentFTPimage;
                 continue;
             }
             // we already have an old image, but the new image differs in size
@@ -173,11 +175,11 @@ function uploadImages($vcards, array $config, array $phonebook, callable $callba
         if (ftp_fput($ftp_conn, $newFTPimage, $memstream, FTP_BINARY)) {
             $countUploadedImages++;
             // upload of new image done, now store new image URL in vCard (new Random Postfix!)
-            $vcard->$imgURL = $imgPath . $newFTPimage;
+            $vcard->IMAGEURL = $imgPath . $newFTPimage;
         } else {
             error_log(PHP_EOL."Error uploading $newFTPimage.");
             unset($vcard->PHOTO);                              // no wrong link will set in phonebook
-            unset($vcard->$imgURL);                            // no wrong link will set in phonebook
+            unset($vcard->IMAGEURL);                           // no wrong link will set in phonebook
         }
         fclose($memstream);
     }
@@ -205,28 +207,32 @@ function dissolveGroups(array $vcards): array
     $groups = [];
 
     // separate iCloud groups
+    /** @var \stdClass $vcard */
     foreach ($vcards as $key => $vcard) {
         if (isset($vcard->{'X-ADDRESSBOOKSERVER-KIND'})) {
             if ($vcard->{'X-ADDRESSBOOKSERVER-KIND'} == 'group') {      // identifier
                 foreach ($vcard->{'X-ADDRESSBOOKSERVER-MEMBER'} as $member) {
-                    $groups[(string)$vcard->FN][] = (string)$member;
+                    $member = str_replace(['urn:', 'uuid:'], ['', ''], (string)$member);
+                    $groups[(string)$vcard->FN][] = $member;
                 }
-            unset($vcards[$key]);                                       // delete this vCard
+                unset($vcards[$key]);                                   // delete this vCard
             }
         }
     }
 
-    $vcards = array_values($vcards);
+    $vcards = array_values($vcards);   // no clue, what this line should do
 
     // assign group memberships
     foreach ($vcards as $vcard) {
         foreach ($groups as $group => $members) {
             if (in_array((string)$vcard->UID, $members)) {
-                if (!isset($vcard->GROUP)) {
-                    $vcard->add('GROUP', []);
+                if (isset($vcard->GROUPS)) {
+                    $assignedGroups = $vcard->GROUPS->getParts();   // get array of values
+                    $assignedGroups[] = $group;                     // add the new value
+                    $vcard->GROUPS->setParts($assignedGroups);      // set the values
+                } else {
+                    $vcard->GROUPS = $group;                        // set the new value
                 }
-                $vcard->GROUP = $group;
-                break;
             }
         }
     }
@@ -243,12 +249,17 @@ function dissolveGroups(array $vcards): array
  */
 function filter(array $vcards, array $filters): array
 {
+    $vcf = '';
+    foreach ($vcards as $vcard) {
+        $vcf = $vcf . $vcard->serialize();
+    }
+    file_put_contents('TEST.txt', $vcf);
+
     // include selected
     $includeFilter = $filters['include'] ?? [];
 
-    if (countFilters($includeFilter)) {
+    if (countFilters($includeFilter) > 0) {
         $step1 = [];
-
         foreach ($vcards as $vcard) {
             if (filtersMatch($vcard, $includeFilter)) {
                 $step1[] = $vcard;
@@ -299,7 +310,7 @@ function countFilters(array $filters): int
 }
 
 /**
- * Check a list of filters against a card
+ * Check a list of filters against the vcard properties CATEGOTIES and/or GROUPS
  *
  * @param mixed $vcard
  * @param array $filters
@@ -310,31 +321,9 @@ function filtersMatch($vcard, array $filters): bool
     foreach ($filters as $attribute => $values) {
         $param = strtoupper($attribute);
         if (isset($vcard->$param)) {
-            if (filterMatches((string)$vcard->$param, $values)) {
+            if (array_intersect($vcard->$param->getParts(), $values)) {
                 return true;
             }
-        }
-    }
-
-    return false;
-}
-
-/**
- * Check a filter against a single attribute
- *
- * @param mixed $attribute
- * @param mixed $filterValues
- * @return bool
- */
-function filterMatches($attribute, $filterValues): bool
-{
-    if (!is_array($filterValues)) {
-        $filterValues = [$filterValues];
-    }
-
-    foreach ($filterValues as $filter) {
-        if (strpos($attribute, $filter) !== false) {
-            return true;
         }
     }
 

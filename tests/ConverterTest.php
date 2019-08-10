@@ -9,7 +9,7 @@ class ConverterTest extends TestCase
     /** @var Converter */
     public $converter;
 
-    /** @var SimpleXMLElement */
+    /** @var \stdClass */
     public $contact;
 
     public function setUp()

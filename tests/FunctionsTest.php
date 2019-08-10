@@ -1,9 +1,55 @@
 <?php
 
 use \PHPUnit\Framework\TestCase;
+use Sabre\VObject;
 
 class FunctionsTest extends TestCase
 {
+    /** @var \stdClass */
+    public $contacts;
+
+    public function setUp()
+    {
+        $this->contacts = $this->defaultContacts();
+    }
+
+    private function defaultContacts()
+    {
+        // definition of the test-takers
+        $contacts = [
+            [
+                'CATEGORIES' => ['foo', 'bar'],
+                'GROUPS' => ['baz', 'qux'],
+            ],
+            [
+                'CATEGORIES' => ['bar', 'qux'],
+                'GROUPS' => ['foo', 'baz'],
+            ],
+            [
+                'CATEGORIES' => ['foo'],
+                'GROUPS' => ['bar'],
+            ],
+            [
+                'CATEGORIES' => ['baz'],
+                'GROUPS' => ['qux'],
+            ],
+        ];
+
+        // assambling the four different test-takers
+        /** @var \stdClass $vcard */
+        foreach ($contacts as $key => $contact) {
+            $vcard = new VObject\Component\VCard([
+                'UID' =>  $key
+            ]);
+            foreach (['CATEGORIES', 'GROUPS'] as $property) {
+                $vcard->$property = $contact[$property];
+            }
+            $vcards[] = $vcard;
+        }
+
+        return $vcards;
+    }
+
     private function defaultPhonebook(): SimpleXMLElement
     {
         $xml =                 <<<EOD
@@ -116,5 +162,52 @@ EOD;
         $this->assertEquals(false, isset($newPhoneBook->phonebook->contact[1]->telephony->number[0]['quickdial']));
         $this->assertEquals(false, isset($newPhoneBook->phonebook->contact[0]->telephony->number[1]['vanity']));
         $this->assertEquals(false, isset($newPhoneBook->phonebook->contact[1]->telephony->number[0]['vanity']));
+    }
+
+    public function filtersPropertiesProvider(): array
+    {
+        return [
+            [
+                [
+                   'include' => [
+                    ],
+                    'exclude' => [
+                        'categories' => ['qux', 'baz'],
+                        'groups' => [],
+                    ],
+                ],
+                2
+            ],
+            [
+                [
+                    'include' => [
+                        'categories' => ['foo'],
+                        'groups' => ['foo'],
+                    ],
+                    'exclude' => [],
+                ],
+                3
+            ],
+            [
+                [
+                    'include' => [
+                        'categories' => ['foo', 'baz'],
+                    ],
+                    'exclude' => [
+                        'groups' => ['bar'],
+                    ],
+                ],
+                2
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider filtersPropertiesProvider
+     */
+    public function testFilter(array $filter, int $residually)
+    {
+        $res = Andig\filter($this->contacts, $filter);
+        $this->assertCount($residually, $res);
     }
 }

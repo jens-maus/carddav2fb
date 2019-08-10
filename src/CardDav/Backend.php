@@ -248,9 +248,9 @@ EOD
      */
     public function enrichVcard($vcard)
     {
+        /** @var \stdClass $vcard */
         if (isset($vcard->FN)) {                                // redundant for downward compatibility
-            $newProperty = 'FULLNAME';                          // usualy $vcard->FULLNAME is sufficient - but Travis CI disagrees
-            $vcard->$newProperty = (string)$vcard->FN;
+            $vcard->FULLNAME = (string)$vcard->FN;
         }
         if (isset($vcard->N)) {                                 // add 'N'-values to additional separate fields
             foreach ($this->parseName($vcard->N) as $key => $value) {

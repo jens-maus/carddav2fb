@@ -171,7 +171,7 @@ class Converter
             }
             // get type
             $type = 'other';
-            $telTypes = isset($card->TEL[$key]->parameters['TYPE']) ? strtoupper($card->TEL[$key]->parameters['TYPE']) : '';
+            $telTypes = strtoupper(isset($card->TEL[$key]->parameters['TYPE'])) ?: '';
             foreach ($phoneTypes as $phoneType => $value) {
                 if (strpos($telTypes, strtoupper($phoneType)) !== false) {
                     $type = strtolower((string)$value);
@@ -250,7 +250,7 @@ class Converter
                 'email' => (string)$address,
             ];
 
-            $mailTypes = isset($card->EMAIL[$key]->parameters['TYPE']) ? strtoupper($card->EMAIL[$key]->parameters['TYPE']) : '';
+            $mailTypes = strtoupper(isset($card->EMAIL[$key]->parameters['TYPE'])) ?: '';
             foreach ($emailTypes as $emailType => $value) {
                 if (strpos($mailTypes, strtoupper($emailType)) !== false) {
                     $addAddress['classifier'] = strtolower($value);

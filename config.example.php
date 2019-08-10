@@ -44,17 +44,18 @@ $config = [
     ],
 
     'filters' => [
-        'include' => [
-            // if empty include all by default
+        'include' => [                                          // if empty include all by default
+            /*
+            'categories' => [],
+            'groups' => [],
+            */
         ],
 
         'exclude' => [
-            'category' => [
-                'a', 'b'
-            ],
-            'group' => [
-                'c', 'd'
-            ],
+            /*
+            'categories' => [],
+            'groups' => [],
+            */
         ],
     ],
 
