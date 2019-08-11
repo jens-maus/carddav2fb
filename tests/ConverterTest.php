@@ -206,4 +206,25 @@ class ConverterTest extends TestCase
             }
         }
     }
+
+    public function testSkipPhoneIsEmpty()
+    {
+        unset($this->contact->TEL);
+
+        $res = $this->converter->convert($this->contact);
+        $this->assertCount(0, $res);
+    }
+
+    public function testPhoneWithoutType()
+    {
+        unset($this->contact->TEL);
+        $this->contact->TEL = '123456789';
+
+        $res = $this->converter->convert($this->contact);
+        $this->assertCount(1, $res);
+
+        // default type = 'other'
+        $numberType = $res[0]->telephony->children()[0];
+        $this->assertEquals('other', (string)$numberType['type']);
+    }
 }

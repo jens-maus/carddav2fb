@@ -425,7 +425,6 @@ function uploadPhonebook(SimpleXMLElement $xmlPhonebook, array $config)
  */
 function downloadPhonebook(array $fritzbox, array $phonebook)
 {
-
     $fritz = new Api($fritzbox['url']);
     $fritz->setAuth($fritzbox['user'], $fritzbox['password']);
     $fritz->mergeClientOptions($fritzbox['http'] ?? []);
