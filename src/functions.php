@@ -220,8 +220,6 @@ function dissolveGroups(array $vcards): array
         }
     }
 
-    $vcards = array_values($vcards);   // no clue, what this line should do
-
     // assign group memberships
     foreach ($vcards as $vcard) {
         foreach ($groups as $group => $members) {
@@ -260,7 +258,7 @@ function filter(array $vcards, array $filters): array
             }
         }
     } else {
-        // f
+        // filter defined but empty sub-rules?
         if (count($includeFilter)) {
             error_log('Include filter is empty: including all downloaded vCards');
         }

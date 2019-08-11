@@ -291,7 +291,10 @@ EOD
 
     /**
      * split the values from 'N' into separate fields
-    */
+     *
+     * @param string $value
+     * @return array
+     */
     private function parseName($value)
     {
         @list(
