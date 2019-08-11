@@ -252,7 +252,7 @@ function filter(array $vcards, array $filters): array
     // include selected
     $includeFilter = $filters['include'] ?? [];
 
-    if (countFilters($includeFilter) > 0) {
+    if (countFilters($includeFilter)) {
         $step1 = [];
         foreach ($vcards as $vcard) {
             if (filtersMatch($vcard, $includeFilter)) {
@@ -260,7 +260,7 @@ function filter(array $vcards, array $filters): array
             }
         }
     } else {
-        // filter defined but empty sub-rules?
+        // f
         if (count($includeFilter)) {
             error_log('Include filter is empty: including all downloaded vCards');
         }

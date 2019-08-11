@@ -250,8 +250,7 @@ EOD
     {
         /** @var \stdClass $vcard */
         if (isset($vcard->FN)) {                                // redundant for downward compatibility
-            $property = 'FULLNAME';
-            $vcard->$property = (string)$vcard->FN;
+            $vcard->FULLNAME = (string)$vcard->FN;
         }
         if (isset($vcard->N)) {                                 // add 'N'-values to additional separate fields
             foreach ($this->parseName($vcard->N) as $key => $value) {
@@ -291,7 +290,7 @@ EOD
     }
 
     /**
-    * split the values from 'N' into separate fields
+     * split the values from 'N' into separate fields
     */
     private function parseName($value)
     {
