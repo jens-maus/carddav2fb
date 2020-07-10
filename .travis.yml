@@ -1,0 +1,56 @@
+sudo: false
+
+language: php
+
+php: 
+  - "7.3"
+
+cache:
+  directories:
+    - $HOME/.composer/cache
+
+env:
+  global:
+    - secure: "Ef6Z9viGwbt8crRkwdjqfg3/xBwTvALrLBfTJJGsbYNbOq7g8amL6EMdlaUhjqLnQT+sHELtQIScpOp7XuVzt5t6yMbYh4zPBJ1MCjY1Fav859X44g42Ba8TzM3jlDSe95n2tq3kM9ExfIhBHIPwjn/Yfy32zhIFXmuDVbQKC4xW0/uD63kvnqA7H74/atNeyVTZu+ZrN05v9kRceLkb98QN2K/EOYZZcLikJDX98afVqI6IdQCjnpOlZ9DoSlODZ11xVPwdfo9wnlrf4RDhYR8MBOGGffQNigc2lIfHEwjOqh65+59TrL5YkdFtuti9dyKNXqvLK3SSUTjMsf1eQnpDoMuN1nS5kOTvPh0QpxrfotspuaUO5/hq2fmO/guvYFVVlShRrNYlMbVokzvk2NW5lohp8kENzntTyNRo+bmgP/GSM5a1Mg0uvpAMAirOUEWZUEatdJLsnokULv8Q8WlC5G59H5zdmzXeLNOh1LMWDUSFrn2M+JDkM8kmK34R6CRpSsxB1c+fJT711EDTl363TAqMvSrvlNgpyMXiNDmSjPIjfjD1sNsO7MkDrLjRj9nUxIaSRMmzW0MKr+Z/R/SCa2+ujY0o/pVZF8hr2UA0VWnji+b5RAiFwEKD5HM9RfeMe2O9rbdlas6I9pO38HOhli43bvvYVeqNq2evOoQ="
+    - secure: "ZN/wGrHvtcl01q6DUBlcvZZ49szNGgYbk8E4DZcc2T8dkNPITumnxhdYU+HoSFvvQm0w3KAIRTRj67EJxeHrKrxpnyJKtl03+iDcdVABP3rLFBy+9PHVgQ4oPEZ9qVqTdRP/z44CwjjR/NNXnSUTNtCIPjW5hnN4eM2YcugxQy8vTr8bwRoFkTrGDSgQhszg+bsjRan0PchJPnWmXnkqYR+lrHUIWcBr73/nwysdZQAX4BK9iUkETwJMNgw3Lgm4Q8QB8eNKoewZKnkjaJ+ykxudOtjXidRl7GxJpyUR6BzI2R6ba0Yf1B8lE+Fk/XuO9qFbZ/qu1Wv6F4AXuSiXcpmI/SVySj7+BN+Jha7Mbz9m2PRp4FXvRW4HxUNPJ168J+pWbzivpMSJ31Nt8MaxGtXedkVX1+j0g6p4hBueulRldJRKkifSFRqPq0z56KrFuSd9FHcpYEjile+wElutM2Fjw8+5QkP4kmaJd/zxHCE1P8tri3sljuWyl1yhKR2V87pY99hCtUp8H48pXBatUYK2pNOJho0f+rtwQIGjcQDAL96EVLXvNS4AW8tLZyUZC9hduSVrbPSxtHNdi8EDX/HJRifLI3sSMGW9ct3Tj5MfPo0MHc3okFh7nHCiCCQQGYEi8mWlLpm7DDgm6YXZo8h5UcOJcMbKAdh/IMm6oLQ="
+
+notifications:
+  email:
+    on_success: never
+    on_failure: change
+
+jobs:
+  include:
+    - stage: Test
+      install:
+        - composer install
+      script:
+        - vendor/bin/phpunit
+    - # parallel
+      install:
+        - rm -f ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/xdebug.ini
+        - composer require --dev "phpstan/phpstan"
+      script:
+        - ./vendor/bin/phpstan analyze --level=5 --no-progress src
+    - # parallel
+      install:
+        - rm -f ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/xdebug.ini
+        - composer require --dev "friendsofphp/php-cs-fixer:^2.8"
+      script:
+        - IFS=$'\n'; COMMIT_SCA_FILES=($(git diff --name-only --diff-filter=ACMRTUXB "${TRAVIS_COMMIT_RANGE}")); unset IFS
+        - ./vendor/bin/php-cs-fixer fix --config=.php_cs.php -v --dry-run --diff --stop-on-violation --using-cache=no --path-mode=intersection -- "${COMMIT_SCA_FILES[@]}"
+    - stage: Deploy
+      install: skip
+      script: skip
+      before_deploy:
+        - |
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker pull ${TRAVIS_REPO_SLUG}:latest
+      deploy:
+        - provider: script
+          on:
+            branch: master
+          script: >
+            bash -c "set -xe &&
+            docker build --cache-from ${TRAVIS_REPO_SLUG}:latest -t ${TRAVIS_REPO_SLUG}:latest . &&
+            docker push ${TRAVIS_REPO_SLUG}:latest"

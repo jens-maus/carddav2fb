@@ -1,100 +1,105 @@
 # CardDAV contacts import for AVM FRITZ!Box
+[![Build Status](https://travis-ci.org/andig/carddav2fb.svg?branch=master)](https://travis-ci.org/andig/carddav2fb) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=BB3W3WH7GVSNW)
 
-[![Build Status](https://scrutinizer-ci.com/g/jens-maus/carddav2fb/badges/build.png?b=master)](https://scrutinizer-ci.com/g/jens-maus/carddav2fb/build-status/master) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/jens-maus/carddav2fb/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/jens-maus/carddav2fb/?branch=master)
+This is an entirely simplified version of https://github.com/jens-maus/carddav2fb. The Vcard parser has been replaced by an extended version of https://github.com/jeroendesloovere/vcard.
 
-Features:
+## Features
 
-* Allows to import CardDAV-based VCard contacts (e.g. from 'owncloud') to a phonebook in a AVM FRITZ!Box
-* CardDAV import includes photo images specified in VCards
-* No modification of FRITZ!Box firmware (aka FRITZ!OS) required
-* Definition of multiple CardDAV accounts and "folders" possible
-* Format of full name in FRITZ!Box phonebook can be designed
-
-**CAUTION: This script will overwrite your current contacts in the FritzBox without any warning!**
-
-## Information
-
-This version of carddav2fb is a forked version from carlos22 (https://github.com/carlos22/carddav2fb) and adding support for convenient image upload, different FRITZ!Box base paths (for example for FRITZ!Box 7490 (UI) OS: 6.50) and full name design support. 
+  * download from any number of CardDAV servers
+  * read from any local *.vcf files (optional)
+  * selection (include/exclude) by categories or groups (e.g. iCloud)
+  * upload of contact pictures to display them on the FRITZ!Fon (handling see below)
+  * automatically preserves quickDial and vanity attributes of phone numbers
+    set in FRITZ!Box Web GUI. Works without config. (Hint: If you used the
+    old way of configuring your CardDav server with X-FB-QUICKDIAL /X-FB-VANITY, then your old config is respected and this new automatic feature is skipped).
+  * automatically preserves internal numbers (e.g. if you use [Gruppenruf](https://avm.de/service/fritzbox/fritzbox-7490/wissensdatenbank/publication/show/1148_Interne-Rufgruppe-in-FRITZ-Box-einrichten-Gruppenruf/))
+  * if more than nine phone numbers are included, the contact will be divided into a corresponding number of phonebook entries (any existing email addresses are assigned to the first set [there is no quantity limit!])
+  * phone numbers are sorted by type. The order of the conversion values ('phoneTypes') determines the order in the phone book entry
+  * the contact's UID of the CardDAV server is added to the phonebook entry (not visible in the FRITZ! Box GUI)
+  * automatically preserves QuickDial and Vanity attributes of phone numbers set in FRITZ!Box Web GUI. Works without config. These data are saved separately in the internal FRITZ!Box memory under `../FRITZ/mediabox/Atrributes.csv` from loss. The legacy way of configuring your CardDav server with X-FB-QUICKDIAL/X-FB-VANITY is no longer supported.
+  * generates an image with keypad and designated quickdial numbers (2-9), which can be uploaded to designated handhelds (see details below)
 
 ## Requirements
 
-* PHP-version 5.3.6 or higher
-* PHP-curl module
-* PHP-ftp module
-* PHP-mbstring module
+  * PHP >7.1 (`apt-get install php php-curl php-mbstring php-xml`)
+  * Composer (follow the installation guide at https://getcomposer.org/download/)
 
 ## Installation
 
- Checkout the carddav2fb sources including its related subprojects using the following command:
+Install requirements
 
-		git clone https://github.com/jens-maus/carddav2fb.git
+    git clone https://github.com/andig/carddav2fb.git
+    cd carddav2fb
+    composer install --no-dev
 
-Now you should have everything setup and checked out to a 'carddav2fb' directory.
-
-### Configuration
-1. Make sure you have `System -> FRITZ!Box-Users -> Login via Username+Password` in your FRITZ!Box activated.
-2. Make sure you have a separate user created under `System -> FRITZ!Box-Users` for which the following access rights have been granted: 
-  * `FRITZ!Box settings` (required to upload telephone book data)
-  * `Access to NAS content` (required to upload photos via ftp).
-3. Make sure the telephone book you are going to update via carddav2fb exists on the FRITZ!Box, otherwise the upload will fail.
-4. Copy `config.example.php` to `config.php` and adapt it to your needs including setting the FRITZ!Box user settings.
+edit `config.example.php` and save as `config.php`
 
 ## Usage
 
-### Ubuntu
+### List all commands:
 
-1. Install PHP, PHP-curl, PHP-ftp, PHP-mbstring and php-xml module:
+    ./carddav2fb list
 
-		sudo apt-get install php-cli php-curl php-ftp php-mbstring php-xml
+### Complete processing:
 
-2. Open a Terminal and execute:
+    ./carddav2fb run
 
-		php carddav2fb.php
+### Get help for a command:
 
-### Windows
+    ./carddav2fb run -h
 
-1. Download PHP from [php.net](http://windows.php.net/download/). Extract it to `C:\PHP`.
-2. Start -> cmd. Run `C:\PHP\php.exe C:\path\to\carddav2fb\carddav2fb.php`
+#### Preconditions
 
-## config.php Example (owncloud)
+  * memory (USB stick) is indexed [Heimnetz -> Speicher (NAS) -> Speicher an der FRITZ!Box]
+  * ftp access is active [Heimnetz -> Speicher (NAS) -> Heimnetzfreigabe]
+  * you use an standalone user (NOT! dslf-config) which has explicit permissions for FRITZ!Box settings, access to NAS content and read/write permission to all available memory [System -> FRITZ!Box-Benutzer -> [user] -> Berechtigungen]
 
-	$config['fritzbox_ip'] = 'fritz.box';
-	$config['fritzbox_user'] = '<USERNAME>';
-	$config['fritzbox_pw'] = '<PASSWORD>';
-	$config['phonebook_number'] = '0';
-	$config['phonebook_name'] = 'Telefonbuch';
-	$config['fritzbox_path'] = 'file:///var/media/ftp/';
+<img align="right" src="assets/fritzfon.png"/>
 
-	// full name format options default 0
-	// parts in '' will only added if existing and switched to true in config
-	// 0 =  'Prefix' Lastname, Firstname, 'Additional Names', 'Suffix', 'orgname'
-	// 1 =  'Prefix' Firstname Lastname 'AdditionalNames' 'Suffix' '(orgname)'
-	// 2 =  'Prefix' Firstname 'AdditionalNames' Lastname 'Suffix' '(orgname)'
-	$config['fullname_format'] = 0;
+### Upload FRITZ!Fon background image
 
-	// fullname parts
-	$config['prefix'] = false; // include prefix in fullname if existing
-	$config['suffix'] = false; // include suffix in fullname if existing
-	$config['addnames'] = false; // include additionalnames in fullname if existing
-	$config['orgname'] = false; // include organisation (company) in fullname if existing
-	
-	$config['quickdial_keyword'] = 'Quickdial:'; // once activated you may add 'Quickdial:+49030123456:**709' to the contact note field and the number will be set as quickdialnumber in your FRITZ!Box. It is possible to add more quickdials for one contact each in a new line
+Using the `background-image` command it is possible to upload the quickdial numbers as background image to FRITZ!Fon (nothing else!)
 
-	// first
-	$config['carddav'][0] = array(
-	  'url' => 'https://<HOSTNAME>/remote.php/carddav/addressbooks/<USERNAME>/contacts',
-	  'user' => '<USERNAME>',
-	  'pw' => '<PASSWORD>'
-	);
+    ./carddav2fb background-image
 
-## Note
-This script is using third-party libraries for downloading VCards from CardDAV servers based on the following packages
-* CardDAV-PHP (https://github.com/jens-maus/CardDAV-PHP.git)
-* FRITZ!Box-API-PHP (https://github.com/jens-maus/fritzbox_api_php.git)
-* VCard-Parser (https://github.com/jens-maus/vCard-parser.git)
+Uploading can also be included in uploading phonebook:
+
+    ./carddav2fb run -i
+
+#### Preconditions
+
+  * requires FRITZ!Fon C4 or C5 handhelds
+  * settings in FRITZ!Fon: Einstellungen -> Anzeige -> Startbildschirme -> Klassisch -> Optionen -> Hintergrundbild
+  * assignment is made via the internal number(s) of the handheld(s) in the 'fritzfons'-array in config.php
+  * internal number have to be between '610' and '615', no '**'-prefix
+
+## Debugging
+
+For debugging please set your config.php to
+
+    'http' => 'debug' => true
+
+## Docker image
+
+The Docker image contains the tool and all its dependencies. A volume
+`/data` contains the configuration files. If the configuration is
+missing, the Docker entrypoint will abort with an error message and copy
+an example file to the volume.
+
+There are two ways to use the image:
+
+    docker run --rm -v ./carddav2fb-config:/data andig/carddav2fb command...
+
+will execute a single command (and remove the created container
+afterwards).
+
+Without a command, the container entrypoint will enter an endless loop,
+repeatedly executing `carddav2fb run` in given intervals. This allows
+automatic, regular updates of your FRITZ!Box's phonebook.
+
 
 ## License
-This script is released under Public Domain.
+This script is released under Public Domain, some parts under GNU AGPL or MIT license. Make sure you understand which parts are which.
 
 ## Authors
-Copyright (c) 2012-2016 Karl Glatz, Martin Rost, Jens Maus, Johannes Freiburger
+Copyright (c) 2012-2019 Andreas Götz, Volker Püschel, Karl Glatz, Christian Putzke, Martin Rost, Jens Maus, Johannes Freiburger

@@ -1,0 +1,6 @@
+parameters:
+	inferPrivatePropertyTypeFromConstructor: true
+	universalObjectCratesClasses:
+		- Sabre\VObject\Document
+	ignoreErrors:
+		- '#Parameter .1 .str of function strtoupper expects string, Sabre.VObject.Node given#'

@@ -1,0 +1,4 @@
+composer.lock
+config.cron
+config.php
+vendor/
