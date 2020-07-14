@@ -12,6 +12,10 @@ Features:
 
 **CAUTION: This script will overwrite your current contacts in the FritzBox without any warning!**
 
+## Information
+
+This version of carddav2fb is a forked version from carlos22 (https://github.com/carlos22/carddav2fb) and adding support for convenient image upload, different FRITZ!Box base paths (for example for FRITZ!Box 7490 (UI) OS: 6.50) and full name design support. 
+
 ## Requirements
 
 * PHP-version 5.3.6 or higher
@@ -21,10 +25,10 @@ Features:
 
 ## Installation
 
-Checkout the carddav2fb sources including its related subprojects using the following command:
+ Checkout the carddav2fb sources including its related subprojects using the following command:
 
 ```
-git clone https://github.com/carlos22/carddav2fb.git
+git clone https://github.com/jens-maus/carddav2fb.git
 ```
 
 Now you should have everything setup and checked out to a 'carddav2fb' directory.
@@ -56,36 +60,34 @@ Now you should have everything setup and checked out to a 'carddav2fb' directory
 
 ## config.php Example (owncloud)
 
-```php
-$config['fritzbox_ip'] = 'fritz.box';
-$config['fritzbox_user'] = '<USERNAME>';
-$config['fritzbox_pw'] = '<PASSWORD>';
-$config['phonebook_number'] = '0';
-$config['phonebook_name'] = 'Telefonbuch';
-$config['fritzbox_path'] = 'file:///var/media/ftp/';
+	$config['fritzbox_ip'] = 'fritz.box';
+	$config['fritzbox_user'] = '<USERNAME>';
+	$config['fritzbox_pw'] = '<PASSWORD>';
+	$config['phonebook_number'] = '0';
+	$config['phonebook_name'] = 'Telefonbuch';
+	$config['fritzbox_path'] = 'file:///var/media/ftp/';
 
-// full name format options default 0
-// parts in '' will only added if existing and switched to true in config
-// 0 =  'Prefix' Lastname, Firstname, 'Additional Names', 'Suffix', 'orgname'
-// 1 =  'Prefix' Firstname Lastname 'AdditionalNames' 'Suffix' '(orgname)'
-// 2 =  'Prefix' Firstname 'AdditionalNames' Lastname 'Suffix' '(orgname)'
-$config['fullname_format'] = 0;
+	// full name format options default 0
+	// parts in '' will only added if existing and switched to true in config
+	// 0 =  'Prefix' Lastname, Firstname, 'Additional Names', 'Suffix', 'orgname'
+	// 1 =  'Prefix' Firstname Lastname 'AdditionalNames' 'Suffix' '(orgname)'
+	// 2 =  'Prefix' Firstname 'AdditionalNames' Lastname 'Suffix' '(orgname)'
+	$config['fullname_format'] = 0;
 
-// fullname parts
-$config['prefix'] = false; // include prefix in fullname if existing
-$config['suffix'] = false; // include suffix in fullname if existing
-$config['addnames'] = false; // include additionalnames in fullname if existing
-$config['orgname'] = false; // include organisation (company) in fullname if existing
+	// fullname parts
+	$config['prefix'] = false; // include prefix in fullname if existing
+	$config['suffix'] = false; // include suffix in fullname if existing
+	$config['addnames'] = false; // include additionalnames in fullname if existing
+	$config['orgname'] = false; // include organisation (company) in fullname if existing
 	
-$config['quickdial_keyword'] = 'Quickdial:'; // once activated you may add 'Quickdial:+49030123456:**709' to the contact note field and the number will be set as quickdialnumber in your FRITZ!Box. It is possible to add more quickdials for one contact each in a new line
+	$config['quickdial_keyword'] = 'Quickdial:'; // once activated you may add 'Quickdial:+49030123456:**709' to the contact note field and the number will be set as quickdialnumber in your FRITZ!Box. It is possible to add more quickdials for one contact each in a new line
 
-// first
-$config['carddav'][0] = array(
-  'url' => 'https://<HOSTNAME>/remote.php/carddav/addressbooks/<USERNAME>/contacts',
-  'user' => '<USERNAME>',
-  'pw' => '<PASSWORD>'
-);
-```
+	// first
+	$config['carddav'][0] = array(
+	  'url' => 'https://<HOSTNAME>/remote.php/carddav/addressbooks/<USERNAME>/contacts',
+	  'user' => '<USERNAME>',
+	  'pw' => '<PASSWORD>'
+	);
 
 ## Note
 This script is using third-party libraries for downloading VCards from CardDAV servers based on the following packages
@@ -97,4 +99,4 @@ This script is using third-party libraries for downloading VCards from CardDAV s
 This script is released under Public Domain.
 
 ## Authors
-Copyright (c) 2012-2016 Karl Glatz, Martin Rost, Jens Maus, Johannes Freiburger
+Copyright (c) 2012-2020 Karl Glatz, Martin Rost, Jens Maus, Johannes Freiburger

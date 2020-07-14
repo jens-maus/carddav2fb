@@ -23,7 +23,7 @@ error_reporting(E_ALL);
 setlocale(LC_ALL, 'de_DE.UTF8');
 
 // Version identifier for CardDAV2FB
-$carddav2fb_version = '1.11 (2016-05-12)';
+$carddav2fb_version = '1.12 (2020-07-14)';
 
 // check for the minimum php version
 $php_min_version = '5.3.6';
@@ -70,7 +70,7 @@ else
 // ---------------------------------------------
 // MAIN
 print "carddav2fb.php " . $carddav2fb_version . " - CardDAV to FRITZ!Box phonebook conversion tool" . PHP_EOL;
-print "Copyright (c) 2012-2016 Karl Glatz, Martin Rost, Jens Maus, Johannes Freiburger" . PHP_EOL . PHP_EOL;
+print "Copyright (c) 2012-2020 Karl Glatz, Martin Rost, Jens Maus, Johannes Freiburger" . PHP_EOL . PHP_EOL;
 
 $client = new CardDAV2FB($config);
 
