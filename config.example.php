@@ -7,6 +7,8 @@
 //       If that's the case with your box, then you have to specify the hostname.
 $config['fritzbox_ip'] = 'fritz.box';
 $config['fritzbox_ip_ftp'] = 'fritz.box';
+// Port to connect to with ftp, if omitted defaults to 21
+//$config['fritzbox_ip_ftp_port'] = '21';
 
 // user name/password to access Fritz!Box
 $config['fritzbox_user'] = 'fb_username';
