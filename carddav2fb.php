@@ -475,7 +475,7 @@ class CardDAV2FB
                 elseif(in_array("voice", $typearr_lower))
                   $type = "other";
                 else
-                  continue;
+                  $type = "other";
               }
               $phone_no[] = array("type"=>$type, "prio"=>$prio, "quickdial"=>$quickdial, "value" => $this->_clear_phone_number($phone_number));
             }
